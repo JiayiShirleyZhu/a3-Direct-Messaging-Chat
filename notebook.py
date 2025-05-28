@@ -13,6 +13,7 @@
 # already covered a bit of the JSON format in class.
 
 import json, time
+from ds_messenger import DirectMessage
 from pathlib import Path
 
 
@@ -79,7 +80,7 @@ class Diary(dict):
 class Notebook:
     """Notebook is a class that can be used to manage a diary notebook."""
 
-    def __init__(self, username: str, password: str, bio: str):
+    def __init__(self, username: str, password: str, bio: str = ""):
         """Creates a new Notebook object. 
         
         Args:
@@ -91,6 +92,8 @@ class Notebook:
         self.password = password 
         self.bio = bio 
         self._diaries = []
+        self._messages = []
+        self._contacts = set()
     
 
     def add_diary(self, diary: Diary) -> None:
@@ -121,6 +124,28 @@ class Notebook:
     def get_diaries(self) -> list[Diary]:
         """Returns the list object containing all diaries that have been added to the Notebook object"""
         return self._diaries
+    
+    def add_message(self, msg: DirectMessage) -> None:
+        for m in self._messages:
+            if (m.sender == msg.sender and
+                m.recipient == msg.recipient and
+                m.timestamp == msg.timestamp and
+                m.message == msg.message):
+                return 
+        self._messages.append(msg)
+        if msg.sender:
+            self._contacts.add(msg.sender)
+        if msg.recipient:
+            self._contacts.add(msg.recipient)
+
+    def get_messages(self) -> list:
+        return self._messages
+
+    def add_contact(self, contact: str):
+        self._contacts.add(contact)
+
+    def get_contacts(self) -> list:
+        return list(self._contacts)
 
     def save(self, path: str) -> None:
         """
@@ -136,12 +161,19 @@ class Notebook:
         Raises NotebookFileError, IncorrectNotebookError
         """
         p = Path(path)
+        p.touch(exist_ok=True)
 
-        if p.exists() and p.suffix == '.json':
+        if p.suffix == '.json':
             try:
-                f = open(p, 'w')
-                json.dump(self.__dict__, f, indent=4)
-                f.close()
+                with open(p, 'w') as f:
+                    json.dump({
+                        "username": self.username,
+                        "password": self.password,
+                        "bio": self.bio,
+                        "_diaries": [dict(entry=d.entry, timestamp=d.timestamp) for d in self._diaries],
+                        "_messages": [msg.__dict__ for msg in self._messages],
+                        "_contacts": list(self._contacts)
+                    }, f, indent=4)
             except Exception as ex:
                 raise NotebookFileError("Error while attempting to process the notebook file.", ex)
         else:
@@ -162,18 +194,31 @@ class Notebook:
         """
         p = Path(path)
 
-        if p.exists() and p.suffix == '.json':
-            try:
-                f = open(p, 'r')
-                obj = json.load(f)
-                self.username = obj['username']
-                self.password = obj['password']
-                self.bio = obj['bio']
-                for diary_obj in obj['_diaries']:
-                    diary = Diary(diary_obj['entry'], diary_obj['timestamp'])
-                    self._diaries.append(diary)
-                f.close()
-            except Exception as ex:
-                raise IncorrectNotebookError(ex)
-        else:
-            raise NotebookFileError()
+        if not p.exists():
+            with open(p, 'w') as f:
+                json.dump({
+                    "username": self.username,
+                    "password": self.password,
+                    "bio": {"entry": "", "timestamp": ""},
+                    "_diaries": [],
+                    "_messages": [],
+                    "_contacts": []
+                }, f, indent=4)
+
+        with open(p, 'r') as f:
+            obj = json.load(f)
+        
+        self.username = obj.get("username", "")
+        self.password = obj.get("password", "")
+        self.bio = obj.get("bio", {})
+        self._diaries = [Diary(d['entry'], d['timestamp']) for d in obj.get("_diaries", [])]
+        self._contacts = set(obj.get("_contacts", []))
+
+        self._messages = []
+        for m in obj.get("_messages", []):
+            dm = DirectMessage()
+            dm.message = m["message"]
+            dm.sender = m.get("sender", "")
+            dm.recipient = m.get("recipient", "")
+            dm.timestamp = m["timestamp"]
+            self._messages.append(dm)

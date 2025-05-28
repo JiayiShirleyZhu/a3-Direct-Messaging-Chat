@@ -80,8 +80,12 @@ class DirectMessenger:
         dm = DirectMessage()
         dm.message = m.get("message")
         dm.timestamp = m.get("timestamp")
-        dm.sender = m.get("from", None)
-        dm.recipient = m.get("recipient", None)
+        if "from" in m:
+          dm.sender = m["from"]
+          dm.recipient = self.username
+        elif "recipient" in m:
+          dm.sender = self.username
+          dm.recipient = m["recipient"]
         messages.append(dm)
 
     return messages
@@ -101,8 +105,12 @@ class DirectMessenger:
         dm = DirectMessage()
         dm.message = m.get("message")
         dm.timestamp = m.get("timestamp")
-        dm.sender = m.get("from", None)
-        dm.recipient = m.get("recipient", None)
+        if "from" in m:
+          dm.sender = m["from"]
+          dm.recipient = self.username
+        elif "recipient" in m:
+          dm.sender = self.username
+          dm.recipient = m["recipient"]
         messages.append(dm)
 
     return messages

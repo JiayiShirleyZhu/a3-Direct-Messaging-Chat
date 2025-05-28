@@ -7,7 +7,6 @@
 # Jiayi Zhu
 # jzhu42@uci.edu
 # 94623196
-import socket
 import json
 from collections import namedtuple
 
@@ -23,27 +22,15 @@ def extract_json(json_msg:str) -> ServerResponse:
   '''
   try:
     json_obj = json.loads(json_msg)
-    resp = json_obj["response"]
-    type = resp["type"]
-    try:
-      message = resp["message"]
-    except KeyError:
-      message = ""
-
-    try:
-      token = resp["token"]
-    except KeyError:
-      token = None
-    
-    try:
-      messages = resp["messages"]
-    except KeyError:
-      messages = []
-
+    resp = json_obj.get("response", {})
+    type_ = resp.get("type")
+    message = resp.get("message", "")
+    token = resp.get("token", None)
+    messages = resp.get("messages", [])
+    return ServerResponse(type_, message, token, messages)
+  
   except json.JSONDecodeError:
     raise DSProtocolError("Json cannot be decoded.")
-
-  return ServerResponse(type, message, token, messages)
 
 def generate_authenticate_rq(username, password):
   return json.dumps({"authenticate": {"username": username,"password": password}})
