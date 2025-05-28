@@ -13,49 +13,59 @@ from tkinter import ttk, filedialog
 from typing import Text
 from ds_messenger import DirectMessage, DirectMessenger
 import notebook
-import time
 from pathlib import Path
 
 class Body(tk.Frame):
-    def __init__(self, root, recipient_selected_callback=None):
+    def __init__(self, root: tk.Tk, recipient_selected_callback=None) -> None:
+        """
+        Initializes the Body frame which contains the contact list and message editor.
+        """
         tk.Frame.__init__(self, root)
         self.root = root
         self._contacts = [str]
         self._select_callback = recipient_selected_callback
         self._draw()
 
-    def node_select(self, event):
+    def node_select(self, event) -> None:
+        """Handles contact selection from the contact list."""
         index = int(self.posts_tree.selection()[0])
         entry = self._contacts[index]
         if self._select_callback is not None:
             self._select_callback(entry)
 
-    def insert_contact(self, contact: str):
+    def insert_contact(self, contact: str) -> None:
+        """Adds a contact to the contact list if not already present."""
         if contact in self._contacts:
             return
         self._contacts.append(contact)
         id = len(self._contacts) - 1
         self._insert_contact_tree(id, contact)
 
-    def _insert_contact_tree(self, id, contact: str):
+    def _insert_contact_tree(self, id, contact: str) -> None:
+        """Inserts a contact into the Treeview widget."""
         if len(contact) > 25:
             entry = contact[:24] + "..."
         id = self.posts_tree.insert('', id, id, text=contact)
 
-    def insert_user_message(self, message:str):
+    def insert_user_message(self, message:str) -> None:
+        """Displays a user's message in the message display area."""
         self.entry_editor.insert(1.0, message + '\n', 'entry-right')
 
-    def insert_contact_message(self, message:str):
+    def insert_contact_message(self, message:str) -> None:
+        """Displays a received message in the message display area."""
         self.entry_editor.insert(1.0, message + '\n', 'entry-left')
 
     def get_text_entry(self) -> str:
+        """Returns the current text input from the message entry box."""
         return self.message_editor.get('1.0', 'end').rstrip()
 
-    def set_text_entry(self, text:str):
+    def set_text_entry(self, text:str) -> None:
+        """Sets the text in the message entry box."""
         self.message_editor.delete(1.0, tk.END)
         self.message_editor.insert(1.0, text)
 
-    def _draw(self):
+    def _draw(self) -> None:
+        """Draws the GUI layout for the Body section."""
         posts_frame = tk.Frame(master=self, width=250)
         posts_frame.pack(fill=tk.BOTH, side=tk.LEFT)
 
@@ -94,17 +104,22 @@ class Body(tk.Frame):
 
 
 class Footer(tk.Frame):
-    def __init__(self, root, send_callback=None):
+    def __init__(self, root: tk.Tk, send_callback=None) -> None:
+        """
+        Initializes the footer frame containing the send button and status label.
+        """
         tk.Frame.__init__(self, root)
         self.root = root
         self._send_callback = send_callback
         self._draw()
 
-    def send_click(self):
+    def send_click(self) -> None:
+        """Trigger the send callback when the Send button is clicked."""
         if self._send_callback is not None:
             self._send_callback()
 
-    def _draw(self):
+    def _draw(self) -> None:
+        """Draw the send button and status label."""
         save_button = tk.Button(master=self, text="Send", width=20, command=self.send_click)
         save_button.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
@@ -113,14 +128,18 @@ class Footer(tk.Frame):
 
 
 class NewContactDialog(tk.simpledialog.Dialog):
-    def __init__(self, root, title=None, user=None, pwd=None, server=None):
+    def __init__(self, root: tk.Tk, title:str =None, user:str =None, pwd:str =None, server:str =None) -> None:
+        """
+        Dialog for configuring DS server connection details.
+        """
         self.root = root
         self.server = server
         self.user = user
         self.pwd = pwd
         super().__init__(root, title)
 
-    def body(self, frame):
+    def body(self, frame) -> None:
+        """Draws the form fields for server, username, and password."""
         self.server_label = tk.Label(frame, width=30, text="DS Server Address")
         self.server_label.pack()
         self.server_entry = tk.Entry(frame, width=30)
@@ -140,14 +159,18 @@ class NewContactDialog(tk.simpledialog.Dialog):
         self.password_entry.pack()
 
 
-    def apply(self):
+    def apply(self) -> None:
+        """Stores the entered configuration when dialog is confirmed."""
         self.user = self.username_entry.get()
         self.pwd = self.password_entry.get()
         self.server = self.server_entry.get()
 
 
 class MainApp(tk.Frame):
-    def __init__(self, root):
+    def __init__(self, root: tk.Tk) -> None:
+        """
+        Initializes the main application GUI frame, sets up initial state and draws layout.
+        """
         tk.Frame.__init__(self, root)
         self.root = root
         self.username = ''
@@ -158,27 +181,26 @@ class MainApp(tk.Frame):
         self.notebook = notebook.Notebook(username=self.username, password=self.password)
         self._draw()
         
-    def _load_contacts(self):
-            self.notebook.load(f"{self.username}.json")
-            contacts = self.notebook.get_contacts()
-            for contact in contacts:
-                if contact != self.username:
-                    self.body.insert_contact(contact)
-            print(contacts)
+    def _load_contacts(self) -> None:
+        """Loads contacts from notebook file and displays them in the GUI."""
+        self.notebook.load(f"{self.username}.json")
+        contacts = self.notebook.get_contacts()
+        for contact in contacts:
+            if contact != self.username:
+                self.body.insert_contact(contact)
     
-    def _load_messages(self):
+    def _load_messages(self) -> None:
+        """(Placeholder) Attempts to load messages from file, if any."""
         try:
             self.notebook.load(f"{self.username}.json")
-            # messages = self.notebook.get_messages()
-            # for msg in messages:
-            #     if msg.sender == self.username:
-            #         self.body.insert_user_message(f"You: {msg.message}")
-            #     else:
-            #         self.body.insert_contact_message(f"{msg.sender}: {msg.message}")
         except:
             pass
 
-    def send_message(self):
+    def send_message(self) -> None:
+        """
+        Sends a message to the selected recipient.
+        Validates input and updates both GUI and local notebook.
+        """
         if not self.direct_messenger:
             tk.messagebox.showerror("Error", "Please configure the DS server first.")
             return
@@ -202,14 +224,16 @@ class MainApp(tk.Frame):
         else:
             tk.messagebox.showerror("Error", "Message failed to send.")
 
-    def add_contact(self):
+    def add_contact(self) -> None:
+        """Prompts user to add a contact and saves it to the notebook."""
         contact = tk.simpledialog.askstring("Add Contact", "Enter the new contact's username:")
         if contact != self.username:
             self.body.insert_contact(contact)
             self.notebook.add_contact(contact)
             self.notebook.save(f"{self.username}.json")
 
-    def recipient_selected(self, recipient):
+    def recipient_selected(self, recipient) -> None:
+        """Loads and displays messages with the selected contact."""
         self.recipient = recipient
         self.body.entry_editor.delete(1.0, tk.END)
         messages = self.notebook.get_messages()
@@ -221,8 +245,8 @@ class MainApp(tk.Frame):
                 else:
                     self.body.insert_contact_message(f"{msg.sender}: {msg.message}")
 
-
-    def _sync_server_messages(self):
+    def _sync_server_messages(self) -> None:
+        """Fetches all messages from server and updates notebook and UI."""
         if self.direct_messenger is None:
             return
 
@@ -233,15 +257,13 @@ class MainApp(tk.Frame):
 
         self.notebook.save(f"{self.username}.json")
 
-    def configure_server(self):
+    def configure_server(self) -> None:
+        """Launches dialog to configure server and authenticates via DirectMessenger."""
         ud = NewContactDialog(self.root, "Configure Account",
                               self.username, self.password, self.server)
         self.username = ud.user
         self.password = ud.pwd
         self.server = ud.server
-        # You must implement this!
-        # You must configure and instantiate your
-        # DirectMessenger instance after this line.
         try:
             self.direct_messenger = DirectMessenger(
                 dsuserver=self.server,
@@ -263,12 +285,15 @@ class MainApp(tk.Frame):
         self._load_contacts()
         self._load_messages()
 
-    def publish(self, message:str):
-        # You must implement this!
+    def publish(self, message:str) -> None:
+        """(Unused stub) Simulates publishing a message."""
         self.body.insert_user_message(f"You: {message}")
 
-    def check_new(self):
-        # You must implement this!
+    def check_new(self) -> None:
+        """
+        Periodically checks for new messages.
+        Adds new contacts and messages to UI and notebook if needed.
+        """
         if self.direct_messenger is not None:
             messages = self.direct_messenger.retrieve_new()
             for msg in messages:
@@ -280,12 +305,10 @@ class MainApp(tk.Frame):
                 if self.recipient == sender:
                     self.body.insert_contact_message(f"{sender}: {msg.message}")
             self.notebook.save(f"{self.username}.json")
-        self.root.after(2000, self.check_new)
-        
+        self.root.after(2000, self.check_new)   
 
-
-    def _draw(self):
-        # Build a menu and add it to the root frame.
+    def _draw(self) -> None:
+        """Draws the full UI layout with menus, body, and footer."""
         menu_bar = tk.Menu(self.root)
         self.root['menu'] = menu_bar
         menu_file = tk.Menu(menu_bar)
@@ -302,8 +325,6 @@ class MainApp(tk.Frame):
         settings_file.add_command(label='Configure DS Server',
                                   command=self.configure_server)
 
-        # The Body and Footer classes must be initialized and
-        # packed into the root window.
         self.body = Body(self.root,
                          recipient_selected_callback=self.recipient_selected)
         self.body.pack(fill=tk.BOTH, side=tk.TOP, expand=True)

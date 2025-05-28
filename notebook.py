@@ -40,30 +40,39 @@ class Diary(dict):
     when the entry object is set and an entry property that stores the diary message.
 
     """
-    def __init__(self, entry:str = None, timestamp:float = 0):
+    def __init__(self, entry:str = None, timestamp:float = 0) -> None:
+        """
+        Initializes a Diary entry.
+
+        :param entry: The diary text content.
+        :param timestamp: A timestamp for the diary, 0 if unset.
+        """
         self._timestamp = timestamp
         self.set_entry(entry)
-
-        # Subclass dict to expose Diary properties for serialization
-        # Don't worry about this!
         dict.__init__(self, entry=self._entry, timestamp=self._timestamp)
     
-    def set_entry(self, entry):
+    def set_entry(self, entry:str) -> None:
+        """
+        Sets the diary entry and updates timestamp if not yet set.
+
+        :param entry: The diary text.
+        """
         self._entry = entry 
         dict.__setitem__(self, 'entry', entry)
-
-        # If timestamp has not been set, generate a new from time module
         if self._timestamp == 0:
             self._timestamp = time.time()
 
-    def get_entry(self):
+    def get_entry(self) -> str:
+        """Returns the diary entry."""
         return self._entry
     
-    def set_time(self, time:float):
+    def set_time(self, time:float) -> None:
+        """Sets the timestamp."""
         self._timestamp = time
         dict.__setitem__(self, 'timestamp', time)
     
-    def get_time(self):
+    def get_time(self) -> float:
+        """Returns the timestamp."""
         return self._timestamp
 
     """
@@ -80,7 +89,7 @@ class Diary(dict):
 class Notebook:
     """Notebook is a class that can be used to manage a diary notebook."""
 
-    def __init__(self, username: str, password: str, bio: str = ""):
+    def __init__(self, username: str, password: str, bio: str = "") -> None:
         """Creates a new Notebook object. 
         
         Args:
@@ -97,23 +106,20 @@ class Notebook:
     
 
     def add_diary(self, diary: Diary) -> None:
-        """Accepts a Diary object as parameter and appends it to the diary list. Diaries 
-        are stored in a list object in the order they are added. So if multiple Diary objects 
-        are created, but added to the Profile in a different order, it is possible for the 
-        list to not be sorted by the Diary.timestamp property. So take caution as to how you 
-        implement your add_diary code.
+        """
+        Adds a Diary object to the notebook.
 
+        :param diary: A Diary instance to add.
         """
         self._diaries.append(diary)
 
 
     def del_diary(self, index: int) -> bool:
         """
-        Removes a Diary at a given index and returns `True` if successful and `False` if an invalid index was supplied. 
+        Deletes the diary at the specified index.
 
-        To determine which diary to delete you must implement your own search operation on 
-        the diary returned from the get_diaries function to find the correct index.
-
+        :param index: Index of diary to delete.
+        :return: True if successful, False if index was invalid.
         """
         try:
             del self._diaries[index]
@@ -122,10 +128,19 @@ class Notebook:
             return False
         
     def get_diaries(self) -> list[Diary]:
-        """Returns the list object containing all diaries that have been added to the Notebook object"""
+        """
+        Returns a list of all Diary objects in the notebook.
+
+        :return: List of Diary entries.
+        """
         return self._diaries
     
     def add_message(self, msg: DirectMessage) -> None:
+        """
+        Adds a DirectMessage to the notebook if it's not already stored.
+
+        :param msg: The DirectMessage object to add.
+        """
         for m in self._messages:
             if (m.sender == msg.sender and
                 m.recipient == msg.recipient and
@@ -139,26 +154,35 @@ class Notebook:
             self._contacts.add(msg.recipient)
 
     def get_messages(self) -> list:
+        """
+        Returns all stored DirectMessages.
+
+        :return: List of DirectMessage objects.
+        """
         return self._messages
 
-    def add_contact(self, contact: str):
+    def add_contact(self, contact: str) -> None:
+        """
+        Adds a contact to the notebook.
+
+        :param contact: Username to add as contact.
+        """
         self._contacts.add(contact)
 
     def get_contacts(self) -> list:
+        """
+        Returns all contact usernames.
+
+        :return: List of contacts.
+        """
         return list(self._contacts)
 
     def save(self, path: str) -> None:
         """
-        Accepts an existing notebook file to save the current instance of Notebook to the file system.
+        Saves the notebook to the specified file path.
 
-        Example usage:
-        
-        ```
-        notebook = Notebook('jo)
-        notebook.save('/path/to/file.json')
-        ```
-
-        Raises NotebookFileError, IncorrectNotebookError
+        :param path: JSON file path to save to.
+        :raises NotebookFileError: If file write fails or path is invalid.
         """
         p = Path(path)
         p.touch(exist_ok=True)
@@ -181,16 +205,10 @@ class Notebook:
 
     def load(self, path: str) -> None:
         """
-        Populates the current instance of Notebook with data stored in a notebook file.
+        Loads notebook data from the specified file path.
 
-        Example usage: 
-
-        ```
-        notebook = Notebook()
-        notebook.load('/path/to/file.json')
-        ```
-
-        Raises NotebookFileError, IncorrectNotebookError
+        :param path: JSON file path to load from.
+        :raises NotebookFileError: If the file does not exist or cannot be parsed.
         """
         p = Path(path)
 

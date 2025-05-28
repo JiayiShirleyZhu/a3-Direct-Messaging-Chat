@@ -12,14 +12,27 @@ import time
 import ds_protocol
 
 class DirectMessage:
-  def __init__(self):
+  def __init__(self) -> None:
+    """
+    Represents a direct message exchanged between users.
+    """
     self.recipient = None
     self.message = None
     self.sender = None
     self.timestamp = None
 
 class DirectMessenger:
-  def __init__(self, dsuserver=None, username=None, password=None):
+  """
+  Handles sending and receiving direct messages to/from the DS server.
+  """
+  def __init__(self, dsuserver:str=None, username:str=None, password:str=None) -> None:
+    """
+    Initializes the messenger, connects to the server, and authenticates the user.
+
+    :param dsuserver: The address of the DS server.
+    :param username: The username to authenticate with.
+    :param password: The password to authenticate with.
+    """
     self.dsuserver = dsuserver
     self.username = username
     self.password = password
@@ -33,7 +46,12 @@ class DirectMessenger:
 
     self._authenticate()
 
-  def _authenticate(self):
+  def _authenticate(self) -> None:
+    """
+    Sends authentication request to the server and stores the session token.
+
+    :raises Exception: If authentication fails.
+    """
     json_msg = ds_protocol.generate_authenticate_rq(self.username, self.password)
     self.sendfile.write(json_msg + '\r\n')
     self.sendfile.flush()
@@ -47,7 +65,13 @@ class DirectMessenger:
       raise Exception(f"Authentication failed: {parsed.message}")
 
   def send(self, message:str, recipient:str) -> bool:
-    # must return true if message successfully sent, false if send failed.
+    """
+    Sends a message to a specified recipient.
+
+    :param message: The content of the message to send.
+    :param recipient: The recipient's username.
+    :return: True if the message was sent successfully, False otherwise.
+    """
     try:
       timestamp = time.time()
       json_msg = ds_protocol.generate_directmessage_rq(self.token, message, recipient, timestamp)
@@ -66,7 +90,11 @@ class DirectMessenger:
       return False
 
   def retrieve_new(self) -> list:
-    # must return a list of DirectMessage objects containing all new messages
+    """
+    Retrieves new/unread messages from the server.
+
+    :return: A list of DirectMessage objects.
+    """
     messages = []
     msg = ds_protocol.generate_fetch_rq(self.token, "unread")
     self.sendfile.write(msg + '\r\n')
@@ -91,7 +119,11 @@ class DirectMessenger:
     return messages
  
   def retrieve_all(self) -> list:
-    # must return a list of DirectMessage objects containing all messages
+    """
+    Retrieves all messages from the server.
+
+    :return: A list of DirectMessage objects.
+    """
     messages = []
     msg = ds_protocol.generate_fetch_rq(self.token, "all")
     self.sendfile.write(msg + '\r\n')
@@ -115,8 +147,10 @@ class DirectMessenger:
 
     return messages
   
-  def close(self):
-    """Cleanly close the connection."""
+  def close(self) -> None:
+    """
+    Closes the connection to the server and all open file streams.
+    """
     self.sendfile.close()
     self.recvfile.close()
     self.client.close()

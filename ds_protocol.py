@@ -9,17 +9,25 @@
 # 94623196
 import json
 from collections import namedtuple
+from typing import Optional, Union
 
 class DSProtocolError(Exception):
+  """
+  Raised when there is an issue decoding or handling JSON protocol messages.
+  """
   pass
 
 # Create a namedtuple to hold the values we expect to retrieve from json messages.
 ServerResponse = namedtuple('ServerResponse', ['type', 'message', 'token', 'messages'])
 
 def extract_json(json_msg:str) -> ServerResponse:
-  '''
-  Call the json.loads function on a json string and convert it to a DataTuple object
-  '''
+  """
+  Parses a JSON-encoded server response into a ServerResponse namedtuple.
+
+  :param json_msg: JSON string received from the server.
+  :return: ServerResponse object containing response type, message, token, and messages.
+  :raises DSProtocolError: If the JSON cannot be decoded.
+  """
   try:
     json_obj = json.loads(json_msg)
     resp = json_obj.get("response", {})
@@ -32,12 +40,35 @@ def extract_json(json_msg:str) -> ServerResponse:
   except json.JSONDecodeError:
     raise DSProtocolError("Json cannot be decoded.")
 
-def generate_authenticate_rq(username, password):
+def generate_authenticate_rq(username: str, password: str) -> str:
+  """
+  Generates a JSON string for authentication request.
+
+  :param username: User's username.
+  :param password: User's password.
+  :return: JSON-formatted string for authentication.
+  """
   return json.dumps({"authenticate": {"username": username,"password": password}})
 
-def generate_directmessage_rq(token, message, recepient_username, timestamp):
-  return json.dumps({"token": token, "directmessage": {"entry": message,"recipient": recepient_username, "timestamp": timestamp}})
+def generate_directmessage_rq(token: str, message: str, recipient_username: str, timestamp: Union[str, float]) -> str:
+  """
+  Generates a JSON string for sending a direct message.
 
-def generate_fetch_rq(token, fetch):
+  :param token: Session token for authentication.
+  :param message: Message content.
+  :param recipient_username: Username of the message recipient.
+  :param timestamp: Timestamp for the message.
+  :return: JSON-formatted string representing the message request.
+  """
+  return json.dumps({"token": token, "directmessage": {"entry": message,"recipient": recipient_username, "timestamp": timestamp}})
+
+def generate_fetch_rq(token: str, fetch: str) -> str:
+  """
+  Generates a JSON string to fetch messages (new or all).
+
+  :param token: Session token for authentication.
+  :param fetch: Type of fetch, e.g., "new" or "all".
+  :return: JSON-formatted string for fetch request.
+  """
   return json.dumps({"token": token, "fetch": fetch})
 
