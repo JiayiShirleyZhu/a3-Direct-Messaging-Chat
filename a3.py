@@ -1,6 +1,7 @@
 # a3.py
 
-# Starter code for assignment 3 in ICS 32 Programming with Software Libraries in Python
+# Starter code for assignment 3 in ICS 32 Programming with Software
+# Libraries in Python
 
 # Replace the following placeholders with your information.
 
@@ -8,17 +9,24 @@
 # jzhu42@uci.edu
 # 94623196
 
-import tkinter as tk
-from tkinter import ttk, filedialog
-from typing import Text
-from ds_messenger import DirectMessage, DirectMessenger
-import notebook
+"""Main GUI and controller for A3 Direct Messaging Chat."""
+# pylint: disable=too-many-instance-attributes,
+# too-many-arguments, too-many-positional-arguments
 from pathlib import Path
+import tkinter as tk
+from tkinter import ttk
+from ds_messenger import DirectMessenger
+import notebook
+
 
 class Body(tk.Frame):
-    def __init__(self, root: tk.Tk, recipient_selected_callback=None) -> None:
+    """Main UI body showing contacts and messages."""
+
+    def __init__(self, root: tk.Tk,
+                 recipient_selected_callback=None) -> None:
         """
-        Initializes the Body frame which contains the contact list and message editor.
+        Initializes the Body frame which contains the
+        contact list and message editor.
         """
         tk.Frame.__init__(self, root)
         self.root = root
@@ -26,7 +34,11 @@ class Body(tk.Frame):
         self._select_callback = recipient_selected_callback
         self._draw()
 
-    def node_select(self, event) -> None:
+    def get_contacts(self):
+        """get the contact list."""
+        return self._contacts
+
+    def node_select(self) -> None:
         """Handles contact selection from the contact list."""
         index = int(self.posts_tree.selection()[0])
         entry = self._contacts[index]
@@ -38,20 +50,20 @@ class Body(tk.Frame):
         if contact in self._contacts:
             return
         self._contacts.append(contact)
-        id = len(self._contacts) - 1
-        self._insert_contact_tree(id, contact)
+        contact_id = len(self._contacts) - 1
+        self._insert_contact_tree(contact_id, contact)
 
-    def _insert_contact_tree(self, id, contact: str) -> None:
+    def _insert_contact_tree(self, contact_id, contact: str) -> None:
         """Inserts a contact into the Treeview widget."""
         if len(contact) > 25:
-            entry = contact[:24] + "..."
-        id = self.posts_tree.insert('', id, id, text=contact)
+            contact = contact[:24] + "..."  # for debugging
+        self.posts_tree.insert('', contact_id, contact_id, text=contact)
 
-    def insert_user_message(self, message:str) -> None:
+    def insert_user_message(self, message: str) -> None:
         """Displays a user's message in the message display area."""
         self.entry_editor.insert(1.0, message + '\n', 'entry-right')
 
-    def insert_contact_message(self, message:str) -> None:
+    def insert_contact_message(self, message: str) -> None:
         """Displays a received message in the message display area."""
         self.entry_editor.insert(1.0, message + '\n', 'entry-left')
 
@@ -59,7 +71,7 @@ class Body(tk.Frame):
         """Returns the current text input from the message entry box."""
         return self.message_editor.get('1.0', 'end').rstrip()
 
-    def set_text_entry(self, text:str) -> None:
+    def set_text_entry(self, text: str) -> None:
         """Sets the text in the message entry box."""
         self.message_editor.delete(1.0, tk.END)
         self.message_editor.insert(1.0, text)
@@ -104,9 +116,13 @@ class Body(tk.Frame):
 
 
 class Footer(tk.Frame):
-    def __init__(self, root: tk.Tk, send_callback=None) -> None:
+    """Footer with send button and status."""
+
+    def __init__(self, root: tk.Tk,
+                 send_callback=None) -> None:
         """
-        Initializes the footer frame containing the send button and status label.
+        Initializes the footer frame containing
+        the send button and status label.
         """
         tk.Frame.__init__(self, root)
         self.root = root
@@ -120,15 +136,20 @@ class Footer(tk.Frame):
 
     def _draw(self) -> None:
         """Draw the send button and status label."""
-        save_button = tk.Button(master=self, text="Send", width=20, command=self.send_click)
+        save_button = tk.Button(master=self, text="Send",
+                                width=20, command=self.send_click)
         save_button.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
         self.footer_label = tk.Label(master=self, text="Ready.")
         self.footer_label.pack(fill=tk.BOTH, side=tk.LEFT, padx=5)
 
 
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-positional-arguments
 class NewContactDialog(tk.simpledialog.Dialog):
-    def __init__(self, root: tk.Tk, title:str =None, user:str =None, pwd:str =None, server:str =None) -> None:
+    """Dialog for server, username, password input."""
+    def __init__(self, root: tk.Tk, title: str = None, user: str = None,
+                 pwd: str = None, server: str = None) -> None:
         """
         Dialog for configuring DS server connection details.
         """
@@ -138,8 +159,9 @@ class NewContactDialog(tk.simpledialog.Dialog):
         self.pwd = pwd
         super().__init__(root, title)
 
-    def body(self, frame) -> None:
+    def body(self, master) -> None:
         """Draws the form fields for server, username, and password."""
+        frame = master
         self.server_label = tk.Label(frame, width=30, text="DS Server Address")
         self.server_label.pack()
         self.server_entry = tk.Entry(frame, width=30)
@@ -158,7 +180,6 @@ class NewContactDialog(tk.simpledialog.Dialog):
         self.password_entry.insert(tk.END, self.pwd)
         self.password_entry.pack()
 
-
     def apply(self) -> None:
         """Stores the entered configuration when dialog is confirmed."""
         self.user = self.username_entry.get()
@@ -167,9 +188,12 @@ class NewContactDialog(tk.simpledialog.Dialog):
 
 
 class MainApp(tk.Frame):
+    """Main application class managing GUI and logic."""
+
     def __init__(self, root: tk.Tk) -> None:
         """
-        Initializes the main application GUI frame, sets up initial state and draws layout.
+        Initializes the main application GUI frame, sets up
+        initial state and draws layout.
         """
         tk.Frame.__init__(self, root)
         self.root = root
@@ -178,9 +202,10 @@ class MainApp(tk.Frame):
         self.server = ''
         self.recipient = ''
         self.direct_messenger = None
-        self.notebook = notebook.Notebook(username=self.username, password=self.password)
+        self.notebook = notebook.Notebook(
+            username=self.username, password=self.password)
         self._draw()
-        
+
     def _load_contacts(self) -> None:
         """Loads contacts from notebook file and displays them in the GUI."""
         self.notebook.load(f"{self.username}.json")
@@ -188,12 +213,12 @@ class MainApp(tk.Frame):
         for contact in contacts:
             if contact != self.username:
                 self.body.insert_contact(contact)
-    
+
     def _load_messages(self) -> None:
         """(Placeholder) Attempts to load messages from file, if any."""
         try:
             self.notebook.load(f"{self.username}.json")
-        except:
+        except Exception:   # pylint: disable=broad-exception-caught
             pass
 
     def send_message(self) -> None:
@@ -202,11 +227,13 @@ class MainApp(tk.Frame):
         Validates input and updates both GUI and local notebook.
         """
         if not self.direct_messenger:
-            tk.messagebox.showerror("Error", "Please configure the DS server first.")
+            tk.messagebox.showerror(
+                "Error", "Please configure the DS server first.")
             return
 
         if not self.recipient:
-            tk.messagebox.showerror("Error", "Please select a contact to send message.")
+            tk.messagebox.showerror(
+                "Error", "Please select a contact to send message.")
             return
 
         message = self.body.get_text_entry()
@@ -226,7 +253,8 @@ class MainApp(tk.Frame):
 
     def add_contact(self) -> None:
         """Prompts user to add a contact and saves it to the notebook."""
-        contact = tk.simpledialog.askstring("Add Contact", "Enter the new contact's username:")
+        contact = tk.simpledialog.askstring(
+            "Add Contact", "Enter the new contact's username:")
         if contact != self.username:
             self.body.insert_contact(contact)
             self.notebook.add_contact(contact)
@@ -238,12 +266,15 @@ class MainApp(tk.Frame):
         self.body.entry_editor.delete(1.0, tk.END)
         messages = self.notebook.get_messages()
         for msg in messages:
-            if ((msg.sender == self.username and msg.recipient == recipient) or
-                (msg.sender == recipient and msg.recipient == self.username)):
+            if ((msg.sender == self.username and
+                 msg.recipient == recipient) or
+                (msg.sender == recipient and
+                 msg.recipient == self.username)):
                 if msg.sender == self.username:
                     self.body.insert_user_message(f"You: {msg.message}")
                 else:
-                    self.body.insert_contact_message(f"{msg.sender}: {msg.message}")
+                    self.body.insert_contact_message(
+                        f"{msg.sender}: {msg.message}")
 
     def _sync_server_messages(self) -> None:
         """Fetches all messages from server and updates notebook and UI."""
@@ -258,7 +289,8 @@ class MainApp(tk.Frame):
         self.notebook.save(f"{self.username}.json")
 
     def configure_server(self) -> None:
-        """Launches dialog to configure server and authenticates via DirectMessenger."""
+        """Launches dialog to configure server and
+        authenticates via DirectMessenger."""
         ud = NewContactDialog(self.root, "Configure Account",
                               self.username, self.password, self.server)
         self.username = ud.user
@@ -270,22 +302,24 @@ class MainApp(tk.Frame):
                 username=self.username,
                 password=self.password
             )
-        except Exception as e:
+        except Exception:  # pylint: disable=broad-exception-caught
             self.direct_messenger = None
-        
+
         path = f"{self.username}.json"
         if Path(path).exists():
-            self.notebook = notebook.Notebook(username=self.username, password=self.password)
+            self.notebook = notebook.Notebook(
+                username=self.username, password=self.password)
             self.notebook.load(path)
         else:
-            self.notebook = notebook.Notebook(username=self.username, password=self.password)
+            self.notebook = notebook.Notebook(
+                username=self.username, password=self.password)
             self.notebook.save(path)
 
         self._sync_server_messages()
         self._load_contacts()
         self._load_messages()
 
-    def publish(self, message:str) -> None:
+    def publish(self, message: str) -> None:
         """(Unused stub) Simulates publishing a message."""
         self.body.insert_user_message(f"You: {message}")
 
@@ -298,14 +332,15 @@ class MainApp(tk.Frame):
             messages = self.direct_messenger.retrieve_new()
             for msg in messages:
                 sender = msg.sender
-                if sender not in self.body._contacts:
+                if sender not in self.body.get_contacts():
                     self.body.insert_contact(sender)
                     self.notebook.add_contact(sender)
                 self.notebook.add_message(msg)
                 if self.recipient == sender:
-                    self.body.insert_contact_message(f"{sender}: {msg.message}")
+                    self.body.insert_contact_message(
+                        f"{sender}: {msg.message}")
             self.notebook.save(f"{self.username}.json")
-        self.root.after(2000, self.check_new)   
+        self.root.after(2000, self.check_new)
 
     def _draw(self) -> None:
         """Draws the full UI layout with menus, body, and footer."""
@@ -362,10 +397,8 @@ if __name__ == "__main__":
     # behavior of the window changes.
     main.update()
     main.minsize(main.winfo_width(), main.winfo_height())
-    id = main.after(2000, app.check_new)
-    print(id)
+    user_id = main.after(2000, app.check_new)
+    print(user_id)
     # And finally, start up the event loop for the program (you can find
     # more on this in lectures of week 9 and 10).
     main.mainloop()
-
-

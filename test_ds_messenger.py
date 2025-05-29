@@ -1,15 +1,20 @@
-import unittest
-from ds_messenger import DirectMessage, DirectMessenger
-from unittest.mock import patch, MagicMock
+"""Unit tests for the ds_messenger module."""
+
 import json
+import unittest
+from unittest.mock import patch, MagicMock
+from ds_messenger import DirectMessage, DirectMessenger
 
 SERVER = "127.0.0.1"
 USERNAME = "Shirley"
 PASSWORD = "password"
 RECIPIENT = "Emily"
 
+
 class TestDirectMessenger(unittest.TestCase):
+    """Tests for the DirectMessenger class."""
     def test_direct_message_attributes(self):
+        """Test that DirectMessage initializes with correct attributes."""
         dm = DirectMessage()
         dm.recipient = "Emily"
         dm.message = "Hello"
@@ -31,7 +36,10 @@ class TestDirectMessenger(unittest.TestCase):
         self.assertIsInstance(result, bool)
 
     def test_retrieve_new(self):
-        """Test retrieving new messages returns a list of messages with expected attributes"""
+        """
+        Test retrieving new messages returns a
+        list of messages with expected attributes
+        """
         messages = self.dm.retrieve_new()
         self.assertIsInstance(messages, list)
         for m in messages:
@@ -62,7 +70,8 @@ class TestDirectMessenger(unittest.TestCase):
                 ]
             }
         }
-        self.dm.recvfile.readline = MagicMock(return_value=json.dumps(fake_response) + '\r\n')
+        self.dm.recvfile.readline = MagicMock(
+            return_value=json.dumps(fake_response) + '\r\n')
         result = self.dm.retrieve_new()
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].sender, "Alice")
@@ -82,7 +91,8 @@ class TestDirectMessenger(unittest.TestCase):
                 ]
             }
         }
-        self.dm.recvfile.readline = MagicMock(return_value=json.dumps(fake_response) + '\r\n')
+        self.dm.recvfile.readline = MagicMock(
+            return_value=json.dumps(fake_response) + '\r\n')
         result = self.dm.retrieve_new()
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].sender, self.dm.username)
@@ -102,7 +112,8 @@ class TestDirectMessenger(unittest.TestCase):
                 ]
             }
         }
-        self.dm.recvfile.readline = MagicMock(return_value=json.dumps(fake_response) + '\r\n')
+        self.dm.recvfile.readline = MagicMock(
+            return_value=json.dumps(fake_response) + '\r\n')
         result = self.dm.retrieve_all()
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].sender, "Alice")
@@ -122,12 +133,13 @@ class TestDirectMessenger(unittest.TestCase):
                 ]
             }
         }
-        self.dm.recvfile.readline = MagicMock(return_value=json.dumps(fake_response) + '\r\n')
+        self.dm.recvfile.readline = MagicMock(
+            return_value=json.dumps(fake_response) + '\r\n')
         result = self.dm.retrieve_all()
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].sender, self.dm.username)
         self.assertEqual(result[0].recipient, "Bob")
-    
+
     def test_send_returns_true(self):
         """Ensure send() hits the return True path"""
         with patch('ds_messenger.socket.socket') as mock_socket:
@@ -144,14 +156,14 @@ class TestDirectMessenger(unittest.TestCase):
 
             dm = DirectMessenger("127.0.0.1", "user", "pass")
             result = dm.send("hi", "someone")
-            assert result is True 
+            assert result is True
 
     def test_send_json_decode_error(self):
         """Covers send() when JSON is invalid and raises exception"""
         self.dm.recvfile.readline = lambda: "INVALID_JSON\r\n"
         result = self.dm.send("trigger error", RECIPIENT)
         self.assertFalse(result)
-    
+
     def test_authentication_failure(self):
         """Covers raise Exception if authentication fails"""
 
@@ -176,6 +188,7 @@ class TestDirectMessenger(unittest.TestCase):
         """Close socket after each test"""
         if self.dm:
             self.dm.close()
+
 
 if __name__ == '__main__':
     unittest.main()
