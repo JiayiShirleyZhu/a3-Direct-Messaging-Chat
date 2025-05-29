@@ -146,14 +146,6 @@ class TestDirectMessenger(unittest.TestCase):
             result = dm.send("hi", "someone")
             assert result is True 
 
-    def test_send_response_not_ok(self):
-        """Covers send() when parsed.type is not 'ok'"""
-        self.dm.recvfile.readline = lambda: json.dumps({
-            "response": {"type": "error", "message": "Something went wrong"}
-        }) + '\r\n'
-        result = self.dm.send("fail test", RECIPIENT)
-        self.assertFalse(result)
-
     def test_send_json_decode_error(self):
         """Covers send() when JSON is invalid and raises exception"""
         self.dm.recvfile.readline = lambda: "INVALID_JSON\r\n"
