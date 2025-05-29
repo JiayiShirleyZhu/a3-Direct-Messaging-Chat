@@ -14,8 +14,9 @@
 # too-many-arguments, too-many-positional-arguments
 from pathlib import Path
 import tkinter as tk
-from tkinter import ttk
-from ds_messenger import DirectMessenger
+from tkinter import ttk, filedialog
+from typing import Text
+from ds_messenger import DirectMessage, DirectMessenger
 import notebook
 
 
@@ -38,7 +39,7 @@ class Body(tk.Frame):
         """get the contact list."""
         return self._contacts
 
-    def node_select(self) -> None:
+    def node_select(self, event) -> None:
         """Handles contact selection from the contact list."""
         index = int(self.posts_tree.selection()[0])
         entry = self._contacts[index]
@@ -50,14 +51,14 @@ class Body(tk.Frame):
         if contact in self._contacts:
             return
         self._contacts.append(contact)
-        contact_id = len(self._contacts) - 1
-        self._insert_contact_tree(contact_id, contact)
+        id = len(self._contacts) - 1
+        self._insert_contact_tree(id, contact)
 
-    def _insert_contact_tree(self, contact_id, contact: str) -> None:
+    def _insert_contact_tree(self, id, contact: str) -> None:
         """Inserts a contact into the Treeview widget."""
         if len(contact) > 25:
-            contact = contact[:24] + "..."  # for debugging
-        self.posts_tree.insert('', contact_id, contact_id, text=contact)
+            entry = contact[:24] + "..."
+        id = self.posts_tree.insert('', id, id, text=contact)
 
     def insert_user_message(self, message: str) -> None:
         """Displays a user's message in the message display area."""
@@ -159,9 +160,8 @@ class NewContactDialog(tk.simpledialog.Dialog):
         self.pwd = pwd
         super().__init__(root, title)
 
-    def body(self, master) -> None:
+    def body(self, frame) -> None:
         """Draws the form fields for server, username, and password."""
-        frame = master
         self.server_label = tk.Label(frame, width=30, text="DS Server Address")
         self.server_label.pack()
         self.server_entry = tk.Entry(frame, width=30)
@@ -397,8 +397,8 @@ if __name__ == "__main__":
     # behavior of the window changes.
     main.update()
     main.minsize(main.winfo_width(), main.winfo_height())
-    user_id = main.after(2000, app.check_new)
-    print(user_id)
+    id = main.after(2000, app.check_new)
+    print(id)
     # And finally, start up the event loop for the program (you can find
     # more on this in lectures of week 9 and 10).
     main.mainloop()
